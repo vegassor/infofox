@@ -1,0 +1,12 @@
+*.pyc
+*~
+__pycache__
+media
+media/
+.idea
+db.sqlite3
+actrun.ps1
+pyvenv.cfg
+Lib
+Scripts
+captcha_keys.txt
