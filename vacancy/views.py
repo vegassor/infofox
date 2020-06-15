@@ -20,10 +20,12 @@ class VacancyListView(APIView):
 class VacancyDetailView(APIView):
     """Вывод одной вакансии полностью"""
     def get(self, request, pk):
-        vacancy = Vacancy.objects.get(pk=pk)
-        serializer = VacancyDetailSerializer(vacancy)
-        return Response(serializer.data)
-
+        try:
+            vacancy = Vacancy.objects.get(pk=pk)
+            serializer = VacancyDetailSerializer(vacancy)
+            return Response(serializer.data)
+        except ObjectDoesNotExist:
+            return Response(status=404)
 
 @permission_classes([IsAdminUser])
 class VacancyCreateView(APIView):
