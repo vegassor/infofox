@@ -14,9 +14,7 @@ class InfoBlockCreateView(APIView):
     def post(self, request):
         infoblock = InfoBlockCreateSerializer(data=request.data)
         if infoblock.is_valid():
-            print(infoblock.validated_data)
             infoblock.save(user=request.user)
-            print(infoblock.data)
             return Response(status=status.HTTP_201_CREATED)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -84,15 +82,17 @@ class InfoBlockListCountView(APIView):
     def get(self, request):
         try:
             user_id = int(request.data.get('user_id'))
-            start_block_id = int(request.data.get('start_block_id')) + 1
+            start_block_id = int(request.data.get('start_block_id'))
             count = int(request.data.get('count'))
+            if count < 0:
+                raise ValueError
             User.objects.get(pk=user_id)
 
             infoblocks = (
                 InfoBlock.objects.select_related('user')
                 .filter(
                     user__id=user_id,
-                    id__gte=start_block_id)
+                    id__gt=start_block_id)
                 .order_by('id')[:count]
             )
 
