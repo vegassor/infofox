@@ -22,15 +22,35 @@ class NewsListView(APIView):
 class NewsListCountView(APIView):
     def get(self, request):
         try:
-            start_news_id = int(request.data.get('start_news_id'))
-            count = int(request.data.get('count'))
+            start_news_id = int(request.query_params.get('start_news_id'))
+            count = int(request.query_params.get('count'))
             if count < 0:
                 raise ValueError
 
             news_query = (
                 News.objects
-                .filter(id__gt=start_news_id)
-                .order_by('id')[:count]
+                .filter(id__lt=start_news_id)
+                .order_by('-id')[:count]
+            )
+
+            serializer = NewsDetailSerializer(news_query, many=True)
+            return Response(serializer.data)
+
+        except (ValueError, TypeError):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([AllowAny])
+class NewsListLastView(APIView):
+    def get(self, request):
+        try:
+            count = int(request.query_params.get('count'))
+            if count < 0:
+                raise ValueError
+
+            news_query = (
+                News.objects
+                .order_by('-id')[:count]
             )
 
             serializer = NewsDetailSerializer(news_query, many=True)

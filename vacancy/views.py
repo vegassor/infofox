@@ -2,13 +2,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.exceptions import ObjectDoesNotExist
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAdminUser, AllowAny
 
 from .models import Vacancy
 from .serializers import *
 
 
+@permission_classes([AllowAny])
 class VacancyListView(APIView):
     """Вывод списка вакансий"""
     def get(self, request):
@@ -17,6 +18,7 @@ class VacancyListView(APIView):
         return Response(serializer.data)
 
 
+@permission_classes([AllowAny])
 class VacancyDetailView(APIView):
     """Вывод одной вакансии полностью"""
     def get(self, request, pk):
@@ -26,6 +28,7 @@ class VacancyDetailView(APIView):
             return Response(serializer.data)
         except ObjectDoesNotExist:
             return Response(status=404)
+
 
 @permission_classes([IsAdminUser])
 class VacancyCreateView(APIView):
@@ -63,12 +66,3 @@ class VacancyUpdateView(APIView):
             except ObjectDoesNotExist:
                 return Response(status=404)
         return Response(status=400)
-
-'''
-//my test data//
-{
-"name": "a",
-"description": "b",
-"content": "c"
-}
-'''

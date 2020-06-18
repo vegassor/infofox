@@ -9,4 +9,5 @@ urlpatterns = [
     path('delete/<int:pk>', InfoBlockDeleteView.as_view()),
     path('change/<int:pk>', InfoBlockChangeView.as_view()),
     path('<int:pk>', InfoBlockDetailView.as_view()),
+    path('send_email/', send_email)
 ]

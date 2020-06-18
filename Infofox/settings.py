@@ -100,6 +100,19 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '200/day',
+        'user': '2000/day',
+        'anon_min': '2/minute',
+        'user_min': '30/minute',
+    }
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework.renderers.JSONRenderer',
+    # )
 }
 
 AUTH_USER_MODEL = 'myauth.User'
@@ -171,3 +184,10 @@ STATICFILES_DIR = [STATIC_DIR]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+EMAIL_HOST = 'smtp.yandex.com'
+# EMAIL_PORT = 25
+EMAIL_HOST_USER = 'f4ffaa@yandex.ru'
+EMAIL_HOST_PASSWORD = 'hZfyGfQ8p9M2mir'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
