@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/infoblock/', include('userpage.urls')),
     path('api/vacancy/', include('vacancy.urls')),
     path('api/news/', include('news.urls')),
-    path('auth/', include('myauth.urls')),
+    path('', include('myauth.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

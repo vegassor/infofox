@@ -14,7 +14,7 @@ class VacancyListView(APIView):
     """Вывод списка вакансий"""
     def get(self, request):
         vacancies = Vacancy.objects.all()
-        serializer = VacancyListSerializer(vacancies, many=True)
+        serializer = VacancyDetailSerializer(vacancies, many=True)
         return Response(serializer.data)
 
 

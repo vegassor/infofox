@@ -2,7 +2,8 @@ from django.urls import path, include
 from. views import *
 
 urlpatterns = [
-    path('', include('djoser.urls')),
-    path('', include('djoser.urls.authtoken')),
-    path('is_admin', is_admin),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
+    path('send_email/', send_email),
+    path('password_reset/', include('django_rest_passwordreset.urls')),
 ]

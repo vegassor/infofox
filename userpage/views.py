@@ -1,19 +1,23 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import send_mail
-from smtplib import SMTPException
 from rest_framework.views import APIView
+from rest_framework.generics import UpdateAPIView
 from rest_framework import status
-from rest_framework.decorators import permission_classes, api_view, throttle_classes
+from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+
 from .models import InfoBlock
-from myauth.models import User
-from .throttling import EmailMinuteThrottle
+from .throttling import UserMinuteThrottle
 from .serializers import *
+
+User = get_user_model()
 
 
 @permission_classes([IsAuthenticated])
 class InfoBlockCreateView(APIView):
+    throttle_classes = [UserMinuteThrottle]
+
     def post(self, request):
         infoblock = InfoBlockCreateSerializer(data=request.data)
         if infoblock.is_valid():
@@ -25,6 +29,8 @@ class InfoBlockCreateView(APIView):
 
 @permission_classes([IsAuthenticated])
 class InfoBlockDeleteView(APIView):
+    throttle_classes = [UserMinuteThrottle]
+
     def delete(self, request, pk):
         try:
             infoblock = InfoBlock.objects.get(pk=pk)
@@ -39,6 +45,8 @@ class InfoBlockDeleteView(APIView):
 
 @permission_classes([IsAuthenticated])
 class InfoBlockChangeView(APIView):
+    throttle_classes = [UserMinuteThrottle]
+
     def put(self, request, pk):
         infoblock_ser = InfoBlockCreateSerializer(data=request.data)
         if infoblock_ser.is_valid():
@@ -108,38 +116,62 @@ class InfoBlockListCountView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['POST'])
-@throttle_classes([EmailMinuteThrottle])
-@permission_classes([AllowAny])
-def send_email(request):
-    response_data = {}
-    purpose_dict = {
-        'question': 'Вопрос по продукту',
-        'offer': 'Предложение',
-        'comment': 'Отзыв',
-        'jobResponse': 'Отклик на вакансию',
-        'claim': 'Жалоба',
-    }
-    print(request.headers)
-    form = EmailCommentForm(request.POST)
-    if form.is_valid():
+@permission_classes([IsAdminUser])
+class SwitchBanUserView(APIView):
+    def post(self, request, pk):
         try:
-            subject = purpose_dict[request.POST.get('purpose')]
-            username = request.user.username
-            if not request.user.is_authenticated:
-                username = 'анонимного пользователя'
-            body = request.POST.get('content')
-            email = request.POST.get('address')
-            body = f'{subject} от {username}:\n{body}\n\nОставленный email: {email}'
-            send_mail(subject, body, 'f4ffaa@yandex.ru', ['f4ffaa@yandex.ru'], fail_silently=False)
-            response_data['email_sent'] = True
-        except SMTPException as e:
-            print(e)
-            response_data['email_sent'] = False
-            response_data['errors'] = str(e)
-            return Response(data=response_data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-    else:
-        form.errors['email_sent'] = False
-        return Response(data=form.errors, status=status.HTTP_400_BAD_REQUEST)
+            action = request.data['action']
+            if action not in ['ban', 'unban']:
+                raise ValueError
+            target_user = User.objects.get(pk=pk)
+            if not (target_user.is_staff or target_user.is_superuser):
+                if action == 'ban':
+                    target_user.is_active = False
+                else:
+                    target_user.is_active = True
+                target_user.save()
+                return Response()
+            else:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except (KeyError, ValueError):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(data=response_data, status=status.HTTP_200_OK)
+
+class ChangePasswordView(UpdateAPIView):
+    """
+    Смена пароля для авторизированного пользователя
+    """
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            # Check old password
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            # set_password also hashes the password that the user will get
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+

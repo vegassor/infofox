@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_rest_passwordreset',
     'myauth',
     'djoser',
     'vacancy',
@@ -108,7 +109,7 @@ REST_FRAMEWORK = {
         'anon': '200/day',
         'user': '2000/day',
         'anon_min': '2/minute',
-        'user_min': '30/minute',
+        'user_min': '10/minute',
     }
     # 'DEFAULT_RENDERER_CLASSES': (
     #     'rest_framework.renderers.JSONRenderer',

@@ -11,10 +11,10 @@ from .serializers import *
 
 @permission_classes([AllowAny])
 class NewsListView(APIView):
-    """Вывод списка вакансий"""
+    """Вывод списка всех новостей"""
     def get(self, request):
-        vacancies = News.objects.all()
-        serializer = NewsDetailSerializer(vacancies, many=True)
+        news = News.objects.all()
+        serializer = NewsDetailSerializer(news, many=True)
         return Response(serializer.data)
 
 
