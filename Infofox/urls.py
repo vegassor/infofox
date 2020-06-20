@@ -20,11 +20,12 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/', include('rest_framework_social_oauth2.urls')),
+    path('', include('myauth.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('api/infoblock/', include('userpage.urls')),
     path('api/vacancy/', include('vacancy.urls')),
     path('api/news/', include('news.urls')),
-    path('', include('myauth.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

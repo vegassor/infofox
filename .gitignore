@@ -6,6 +6,7 @@ media/
 .idea
 db.sqlite3
 actrun.ps1
+connectpe.ps1
 pyvenv.cfg
 Lib
 Scripts

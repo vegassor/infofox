@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-
+from datetime import timedelta
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,7 +22,7 @@ SECRET_KEY = 'd6irrb#(jervl&w_77#br(n&t@4awal=nx320n1ypq=7#*kd6z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['*']
-
+FRONT_HOST = 'localhost:8000'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -31,12 +31,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'django_rest_passwordreset',
-    'myauth',
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
     'djoser',
+
+    'myauth',
     'vacancy',
     'userpage',
     'news',
@@ -78,6 +83,7 @@ WSGI_APPLICATION = 'Infofox.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
+    # postgres local
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'infofox2',
@@ -86,10 +92,28 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     },
+    # postgres connect to pythonanywhere through ssh
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'infofox',
+    #     'USER': 'super',
+    #     'PASSWORD': 'strongpassword',
+    #     'HOST': 'localhost',
+    #     'PORT': '9999',
+    # },
+    # postgres on pythonanywhere
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'infofox',
+    #     'USER': 'super',
+    #     'PASSWORD': 'strongpassword',
+    #     'HOST': 'CoolStoryBob-1690.postgres.pythonanywhere-services.com',
+    #     'PORT': '11690',
+    # },
     # 'default': {
     #     'ENGINE': 'django.db.backends.sqlite3',
     #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    # }
+    # },
 }
 
 REST_FRAMEWORK = {
@@ -97,6 +121,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -108,9 +135,9 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '200/day',
         'user': '2000/day',
-        'anon_min': '2/minute',
+        'anon_min': '10/minute',
         'user_min': '10/minute',
-    }
+    },
     # 'DEFAULT_RENDERER_CLASSES': (
     #     'rest_framework.renderers.JSONRenderer',
     # )
@@ -121,6 +148,15 @@ AUTH_USER_MODEL = 'myauth.User'
 DJOSER = {
     'LOGIN_FIELD': 'username',
     'USER_CREATE_PASSWORD_RETYPE': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'reset_password/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': 'reset_username/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'EMAIL': {
+        # 'messages': 'myapp.constants.CustomMessages',
+        'messages': 'djoser.constants.Messages',
+    },
     'SERIALIZERS': {
         'user_create': 'myauth.serializers.UserCreateSerializer',
         'user': 'myauth.serializers.UserCreateSerializer',
@@ -128,6 +164,31 @@ DJOSER = {
     }
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -192,3 +253,12 @@ EMAIL_HOST_USER = 'f4ffaa@yandex.ru'
 EMAIL_HOST_PASSWORD = 'hZfyGfQ8p9M2mir'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SOCIAL_AUTH_VK_OAUTH2_KEY = '7516262'
+SOCIAL_AUTH_VK_OAUTH2_SECRET = '3tnIGUDBlsPK0p4qNiRb'
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.vk.VKOAuth2',
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)

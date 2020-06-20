@@ -46,7 +46,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         )
         # msg.attach_alternative(email_html_message, "text/html")
         msg.send()
-    except SMTPException as e:
+    except (SMTPException, OSError) as e:
         raise ServiceUnavailable(detail=str(e))
 
 
@@ -75,7 +75,7 @@ def send_email(request):
             body = f'{subject} от {username}:\n{body}\n\nОставленный email: {email}'
             send_mail(subject, body, 'f4ffaa@yandex.ru', ['f4ffaa@yandex.ru'], fail_silently=False)
             response_data['email_sent'] = True
-        except SMTPException as e:
+        except (SMTPException, OSError) as e:
             print(e)
             response_data['email_sent'] = False
             response_data['errors'] = str(e)
