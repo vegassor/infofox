@@ -1,7 +1,9 @@
 from django.db import models
-from django.core.validators import MinLengthValidator, RegexValidator
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import RegexValidator, EmailValidator, ValidationError
 from django.contrib.auth.validators import ASCIIUsernameValidator
 from django.contrib.auth.models import AbstractUser
+from .validators import not_empty
 
 
 class User(AbstractUser):
@@ -15,9 +17,23 @@ class User(AbstractUser):
             'unique': "A user with that username already exists.",
         },
     )
-    email = models.EmailField(unique=True, max_length=255)
+    email = models.EmailField(unique=True,
+                              null=True,
+                              blank=True,
+                              max_length=255,
+                              validators=[EmailValidator, not_empty])
     REQUIRED_FIELDS = ['email', ]
     USERNAME_FIELD = 'username'
 
     def get_username(self):
         return self.username
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique()
+        try:
+            email = User.objects.get(email=self.email).email
+            print(email)
+            if email != '' and email is not None:
+                raise ValidationError('Пользователь с таким email уже существует')
+        except ObjectDoesNotExist:
+            pass

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'social_django',
     'rest_framework_social_oauth2',
+    'rest_framework_recaptcha',
     'djoser',
 
     'myauth',
@@ -158,14 +159,14 @@ DJOSER = {
         'messages': 'djoser.constants.Messages',
     },
     'SERIALIZERS': {
-        'user_create': 'myauth.serializers.UserCreateSerializer',
-        'user': 'myauth.serializers.UserCreateSerializer',
+        # 'user_create': 'myauth.serializers.UserCreateSerializer',
+        # 'user': 'myauth.serializers.UserCreateSerializer',
         # 'current_user': 'myauth.serializers.CurrentUserSerializer',
     }
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=200),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -242,6 +243,7 @@ CORS_ALLOW_HEADERS = [
 
 STATIC_URL = '/static/'
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIR = [STATIC_DIR]
 
 MEDIA_URL = '/media/'
@@ -254,11 +256,15 @@ EMAIL_HOST_PASSWORD = 'hZfyGfQ8p9M2mir'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-SOCIAL_AUTH_VK_OAUTH2_KEY = '7516262'
-SOCIAL_AUTH_VK_OAUTH2_SECRET = '3tnIGUDBlsPK0p4qNiRb'
+SOCIAL_AUTH_VK_OAUTH2_KEY = '7517081'
+SOCIAL_AUTH_VK_OAUTH2_SECRET = 'bhNzP7aBV5S0hTECIkV9'
+# SOCIAL_AUTH_VK_OAUTH2_KEY = '7517531'
+# SOCIAL_AUTH_VK_OAUTH2_SECRET = 'lOaiWe1gT2ImZFRfF4Eq'
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.vk.VKOAuth2',
     'rest_framework_social_oauth2.backends.DjangoOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
+
+DRF_RECAPTCHA_SECRET_KEY = '6Lf8nN0UAAAAAH61qVsuUHOzazCJxUjB4JkolczW'

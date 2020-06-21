@@ -101,3 +101,22 @@ class NewsDeleteView(APIView):
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
+class UniqueOrBlankEmailValidator:
+    def __init__(self):
+        pass
+
+    def __call__(self, value):
+        try:
+            print('worked')
+            email = User.objects().get(email=value)
+            if email != '':
+                raise ValidationError
+        except ObjectDoesNotExist:
+            pass
