@@ -3,12 +3,16 @@ from .views import *
 
 
 urlpatterns = [
-    path('', InfoBlockListView.as_view()),
-    path('change_password/', ChangePasswordView.as_view()),
-    path('count/', InfoBlockListCountView.as_view()),
-    path('add/', InfoBlockCreateView.as_view()),
-    path('delete/<int:pk>', InfoBlockDeleteView.as_view()),
-    path('change/<int:pk>', InfoBlockChangeView.as_view()),
-    path('<int:pk>', InfoBlockDetailView.as_view()),
-    path('ban/<int:pk>', SwitchBanUserView.as_view()),
+    path('', ViewProfile.as_view()),
+    path('add/', CreateProfile.as_view()),
+    path('profile/<int:pk>', InfoBlockFromProfileListView.as_view()),
+    path('profile/<int:profile_pk>/add/', InfoBlockCreateView.as_view()),
+    path('profile/<int:profile_pk>/delete/<int:block_pk>', InfoBlockDeleteView.as_view()),
+    path('profile/<int:profile_pk>/change/<int:block_pk>', InfoBlockChangeView.as_view()),
+    path('profile/<int:pk>/disconnect/', DisconnectBracelet.as_view()),
+    path('bracelet/add/', createhandler.as_view()),
+    path('bracelet/add/many/', CreateManyHandlers.as_view()),
+    path('bracelet/delete/<int:pk>', deleteHandler.as_view()),
+    path('bracelet/<int:pk>', AccountDefinition.as_view()),
+    path('bracelet/registration/<int:pk>', JoinHandler.as_view()),
 ]

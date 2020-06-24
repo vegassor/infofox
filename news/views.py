@@ -13,7 +13,7 @@ from .serializers import *
 class NewsListView(APIView):
     """Вывод списка всех новостей"""
     def get(self, request):
-        news = News.objects.all()
+        news = News.objects.all().order_by('id')
         serializer = NewsDetailSerializer(news, many=True)
         return Response(serializer.data)
 

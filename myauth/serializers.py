@@ -8,21 +8,6 @@ from django.core import exceptions as django_exceptions
 from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
-# class UserCreateSerializer2(UserCreateSerializer):
-#     recaptcha = ReCaptchaField()
-#
-#     # def is_valid(self, raise_exception=False):
-#     #     valid = super().is_valid(raise_exception=raise_exception)
-#     #     return valid
-#
-#     class Meta(UserCreateSerializer.Meta):
-#         model = User
-#         fields = ('id', 'email', 'username', 'password', 'recaptcha')
-#
-#     def create(self, validated_data):
-#         print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-#         return super().create(validated_data)
-
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={"input_type": "password"}, write_only=True)
@@ -69,6 +54,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 user.is_active = False
                 user.save(update_fields=["is_active"])
         return user
+
+
+class EmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email',)
 
 
 class EmailCommentForm(forms.Form):

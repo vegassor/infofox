@@ -13,7 +13,7 @@ from .serializers import *
 class VacancyListView(APIView):
     """Вывод списка вакансий"""
     def get(self, request):
-        vacancies = Vacancy.objects.all()
+        vacancies = Vacancy.objects.all().order_by('id')
         serializer = VacancyDetailSerializer(vacancies, many=True)
         return Response(serializer.data)
 

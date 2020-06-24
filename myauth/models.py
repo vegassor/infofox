@@ -17,9 +17,7 @@ class User(AbstractUser):
             'unique': "A user with that username already exists.",
         },
     )
-    email = models.EmailField(unique=True,
-                              null=True,
-                              blank=True,
+    email = models.EmailField(unique=False,
                               max_length=255,
                               validators=[EmailValidator, not_empty])
     REQUIRED_FIELDS = ['email', ]
@@ -28,12 +26,3 @@ class User(AbstractUser):
     def get_username(self):
         return self.username
 
-    def validate_unique(self, exclude=None):
-        super().validate_unique()
-        try:
-            email = User.objects.get(email=self.email).email
-            print(email)
-            if email != '' and email is not None:
-                raise ValidationError('Пользователь с таким email уже существует')
-        except ObjectDoesNotExist:
-            pass

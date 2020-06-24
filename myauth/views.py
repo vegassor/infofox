@@ -2,18 +2,21 @@ from smtplib import SMTPException
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
 
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django_rest_passwordreset.signals import reset_password_token_created
 
 from .throttling import EmailMinuteThrottle, ServiceUnavailable
-from .serializers import EmailCommentForm
+from .serializers import EmailCommentForm, EmailSerializer
+from .models import User
 
 
 @api_view(['GET'])
@@ -85,3 +88,18 @@ def send_email(request):
         return Response(data=form.errors, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(data=response_data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_email(request):
+    email = EmailSerializer(data=request.data)
+    if email.is_valid():
+        try:
+            User.objects.get(email=email.validated_data['email'])
+            raise MultipleObjectsReturned
+        except ObjectDoesNotExist:
+            request.user.email = email.validated_data['email']
+            request.user.save()
+        except MultipleObjectsReturned:
+            return Response({"email": "Пользователь с таким email уже существует"}, status=status.HTTP_400_BAD_REQUEST)

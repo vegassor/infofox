@@ -7,5 +7,6 @@ urlpatterns = [
     path('auth/', include('djoser.urls.jwt')),
     path('auth/is_admin', is_admin),
     path('send_email/', send_email),
+    path('change_email/', change_email),
     path('password_reset/', include('django_rest_passwordreset.urls')),
 ]

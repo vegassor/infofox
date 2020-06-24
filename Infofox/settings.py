@@ -155,14 +155,8 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,
     'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
     'EMAIL': {
-        # 'messages': 'myapp.constants.CustomMessages',
         'messages': 'djoser.constants.Messages',
     },
-    'SERIALIZERS': {
-        # 'user_create': 'myauth.serializers.UserCreateSerializer',
-        # 'user': 'myauth.serializers.UserCreateSerializer',
-        # 'current_user': 'myauth.serializers.CurrentUserSerializer',
-    }
 }
 
 SIMPLE_JWT = {

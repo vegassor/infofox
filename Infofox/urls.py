@@ -23,7 +23,7 @@ urlpatterns = [
     path('auth/', include('rest_framework_social_oauth2.urls')),
     path('', include('myauth.urls')),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/infoblock/', include('userpage.urls')),
+    path('api/userpage/', include('userpage.urls')),
     path('api/vacancy/', include('vacancy.urls')),
     path('api/news/', include('news.urls')),
 ]
