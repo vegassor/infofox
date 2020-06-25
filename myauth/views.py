@@ -20,9 +20,15 @@ from .models import User
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def is_admin(request, *args, **kwargs):
-    return Response(data={"User_is_admin": True}, status=status.HTTP_200_OK)
+    return Response(data={"is_admin": request.user.is_staff}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_superuser(request, *args, **kwargs):
+    return Response(data={"is_superuser": request.user.is_superuser}, status=status.HTTP_200_OK)
 
 
 @receiver(reset_password_token_created)
@@ -31,10 +37,10 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         'current_user': reset_password_token.user,
         'username': reset_password_token.user.username,
         'email': reset_password_token.user.email,
-        'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+        'reset_password_url': "{}?token={}".format('http://coolstorybob.herokuapp.com/password_reset', reset_password_token.key)
     }
 
-    # email_html_message = render_to_string('email/user_reset_password.html', context)
+    email_html_message = render_to_string('email/user_reset_password.html', context)
     email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
     try:
         msg = EmailMultiAlternatives(
@@ -47,7 +53,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
             # to:
             [reset_password_token.user.email]
         )
-        # msg.attach_alternative(email_html_message, "text/html")
+        msg.attach_alternative(email_html_message, "text/html")
         msg.send()
     except (SMTPException, OSError) as e:
         raise ServiceUnavailable(detail=str(e))

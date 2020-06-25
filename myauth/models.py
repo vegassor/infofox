@@ -14,7 +14,7 @@ class User(AbstractUser):
                                    'Имя пользователя должно состоять из английских букв, цифр и -,_,.'),
                     ASCIIUsernameValidator],
         error_messages={
-            'unique': "A user with that username already exists.",
+            'unique': "Пользователь с таким именем уже существует",
         },
     )
     email = models.EmailField(unique=False,

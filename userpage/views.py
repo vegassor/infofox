@@ -1,5 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import permission_classes
@@ -18,11 +19,11 @@ class CreateProfile(APIView):
         data['user'] = request.user.pk
         newProfile = ProfileCreateSerializer(data=data)
         if newProfile.is_valid():
-            p = newProfile.save()
-            return Response({"profile_id": p.id}, status=status.HTTP_201_CREATED)
-        else:
-            print(newProfile.errors)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            if Profile.objects.filter(user__id=request.user.pk).count() < settings.MAX_PROFILES_PER_USER:
+                p = newProfile.save()
+                return Response({"profile_id": p.id}, status=status.HTTP_201_CREATED)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @permission_classes([IsAuthenticated])
@@ -45,11 +46,17 @@ class InfoBlockCreateView(APIView):
         infoblock = InfoBlockCreateSerializer(data=request.data)
         status_code = status.HTTP_201_CREATED
 
-        if infoblock.is_valid():
+        if (
+                infoblock.is_valid() and
+                InfoBlock.objects.filter(
+                    profile__id=profile_pk
+                ).count() < settings.MAX_INFOBLOCKS_PER_PROFILE
+        ):
             try:
                 profile = Profile.objects.get(pk=profile_pk)
                 if profile.user == request.user:
-                    infoblock.save(profile=profile)
+                    block_id = infoblock.save(profile=profile).id
+                    return Response({'block_id': block_id}, status=status_code)
                 else:
                     status_code = status.HTTP_403_FORBIDDEN
             except ObjectDoesNotExist:
@@ -152,6 +159,21 @@ class InfoBlockFromProfileListView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class BraceletFromProfile(APIView):
+    @permission_classes([IsAuthenticated])
+    def get(self, request, pk):
+        try:
+            profile = Profile.objects.get(pk=pk)
+            if request.user == profile.user and profile.is_activated:
+                bracelets = Bracelet.objects.select_related('profile').filter(profile=profile)
+                serializer = BraceletsFromProfileSerializer(bracelets, many=True)
+                return Response(data=serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(data={'status': 'Браслеты или профиль не найдены'}, status=status.HTTP_423_LOCKED)
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
 class AccountDefinition(APIView):
     @permission_classes([AllowAny])
     def get(self, request, pk):
@@ -186,6 +208,33 @@ class JoinHandler(APIView):
                 profile.is_activated = True
                 bracelet.save()
                 profile.save()
+                return Response({"status": "Attached to profile"})
+            else:
+                return Response({"status": "Invalid unique_code or profile_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except (KeyError, ValueError, TypeError):
+            return Response({"status": "unique_code and profile_id are required"}, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return Response({"status": "no such bracelet or profile"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk):
+        try:
+            profile_id = int(request.data['profile_id'])
+            bracelet = Bracelet.objects.get(pk=pk)
+            if bracelet.profile.user != request.user:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
+            old_profile = bracelet.profile
+            profile = Profile.objects.get(pk=profile_id)
+
+            if request.user == profile.user:
+                bracelet.profile = profile
+                profile.is_activated = True
+                bracelet.save()
+                profile.save()
+                if Bracelet.objects.select_related('profile').filter(profile__id=old_profile.id).count() <= 0:
+                    old_profile.is_activated = False
+                    old_profile.save()
                 return Response({"status": "Attached to profile"})
             else:
                 return Response({"status": "Invalid unique_code or profile_id"}, status=status.HTTP_400_BAD_REQUEST)

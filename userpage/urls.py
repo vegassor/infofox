@@ -9,6 +9,7 @@ urlpatterns = [
     path('profile/<int:profile_pk>/add/', InfoBlockCreateView.as_view()),
     path('profile/<int:profile_pk>/delete/<int:block_pk>', InfoBlockDeleteView.as_view()),
     path('profile/<int:profile_pk>/change/<int:block_pk>', InfoBlockChangeView.as_view()),
+    path('profile/<int:pk>/bracelets', BraceletFromProfile.as_view()),
     path('profile/<int:pk>/disconnect/', DisconnectBracelet.as_view()),
     path('bracelet/add/', createhandler.as_view()),
     path('bracelet/add/many/', CreateManyHandlers.as_view()),

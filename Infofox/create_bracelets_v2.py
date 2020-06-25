@@ -1,3 +1,5 @@
+import sys
+import getpass
 import random
 import string
 import requests
@@ -9,6 +11,10 @@ class AuthError(Exception):
     def __str__(self):
         return 'Bad login or password'
 
+class ArgvError(Exception):
+    def __str__(self):
+        return 'Bad parameters passed'
+
 
 def get_token(username, password, host='coolstorybob.pythonanywhere.com'):
     r_login = requests.post(f'http://{host}/auth/token/login', {'username': username, 'password': password})
@@ -16,6 +22,9 @@ def get_token(username, password, host='coolstorybob.pythonanywhere.com'):
     if r_login.status_code == 200:
         return r_login.json().get('auth_token')
 
+def is_superuser(token, host='coolstorybob.pythonanywhere.com'):
+    r = requests.get(f'http://{host}/auth/is_superuser/', headers={"Authorization": "Token "+token})
+    return r.json().get('is_superuser')
 
 def generate_bracelets(token, amount=1, host='coolstorybob.pythonanywhere.com'):
     create_url = f'http://{host}/api/userpage/bracelet/add/'  
@@ -58,18 +67,40 @@ def generate_bracelets_on_server(token, amount=1, host='coolstorybob.pythonanywh
     
     
 if __name__ == '__main__':
-    try:
-        token = get_token('one', 'pasphrase', 'localhost:8000')
-        if not token:
-            raise AuthError
-        # b = generate_bracelets(token, 10, 'localhost:8000')
-        b = generate_bracelets_on_server(token, 5, 'localhost:8000')
-        
-        filename = f'Партия браслетов от {datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.csv'
-        with open(filename, 'w', newline='') as f:
-            writer = csv.writer(f, delimiter=';')
-            for bracelet in b:
-                url = f'http://coolstorybob.herokuapp.com/bracelet/{bracelet[0]}'
-                writer.writerow([bracelet[0], bracelet[1], url])
-    except AuthError as e:
-        print(e)
+    try:    
+        username = 'one'
+        password = 'passphrase'
+        amount = 10
+        if len(sys.argv) == 1:
+            username = input('Username: ')
+            password = getpass.getpass(prompt='Password: ')
+            amount = int(input('Amount of bracelets you want to create: '))
+        elif len(sys.argv) == 2:          
+            if sys.argv[1] != '-s':
+                raise ArgvError
+            resp = input('Amount of bracelets you want to create (10 is default): ')
+            if resp != '':
+                amount = int(resp)
+        else:
+            raise ArgvError
+        try:
+            host = 'coolstorybob.pythonanywhere.com'
+            token = get_token(username, password, host)
+            
+            if not token or not is_superuser(token, host):
+                raise AuthError
+                
+            # b = generate_bracelets(token, 10, host)
+            b = generate_bracelets_on_server(token, amount, host)
+            filename = f'Партия браслетов от {datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.csv'
+            
+            with open(filename, 'w', newline='') as f:
+                writer = csv.writer(f, delimiter=';')
+                for bracelet in b:
+                    print(bracelet[0])
+                    url = f'http://coolstorybob.herokuapp.com/bracelet/{bracelet[0]}'
+                    writer.writerow([bracelet[0], bracelet[1], url])
+        except AuthError as e:
+            print(e)
+    except (ArgvError, ValueError):
+        print('Bad parameters passed')

@@ -1,6 +1,6 @@
+from django.db import models
 from rest_framework import serializers
 from .models import InfoBlock, Bracelet, Profile
-from django.db import models
 
 
 class InfoBlockDeleteSerializer(serializers.ModelSerializer):
@@ -46,7 +46,7 @@ class JoinBraceletSerializer(serializers.ModelSerializer):
 
 
 class CheckCodeSerializers(serializers.ModelSerializer):
-    unique_code = models.CharField(max_length=8, )
+    unique_code = models.CharField(max_length=8)
 
     class Meta:
         model = Bracelet
@@ -69,10 +69,16 @@ class ProfileViewListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ('name', 'bracelets', 'is_activated')
+        fields = ('id', 'name', 'bracelets', 'is_activated')
 
 
 class NewProfileNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('name',)
+
+
+class BraceletsFromProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bracelet
+        fields = ('id', 'unique_code')
