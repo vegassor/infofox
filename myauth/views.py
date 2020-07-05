@@ -4,7 +4,7 @@ from django.conf import settings
 from django.urls import reverse
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django_rest_passwordreset.signals import reset_password_token_created
+from django_rest_passwordreset.models import ResetPasswordToken
 
 from .throttling import EmailMinuteThrottle, ServiceUnavailable
 from .serializers import EmailCommentForm, EmailSerializer
@@ -20,7 +21,7 @@ from .models import User
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def is_admin(request, *args, **kwargs):
     return Response(data={"is_admin": request.user.is_staff}, status=status.HTTP_200_OK)
 
@@ -100,6 +101,7 @@ def send_email(request):
 @permission_classes([IsAuthenticated])
 def change_email(request):
     email = EmailSerializer(data=request.data)
+    
     if email.is_valid():
         try:
             User.objects.get(email=email.validated_data['email'])
@@ -107,5 +109,22 @@ def change_email(request):
         except ObjectDoesNotExist:
             request.user.email = email.validated_data['email']
             request.user.save()
+            return Response(status=status.HTTP_200_OK)
         except MultipleObjectsReturned:
             return Response({"email": "Пользователь с таким email уже существует"}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({"email": "Invalid email"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def token_in_db(request):
+    token = request.data.get('token')
+    if token:
+        try:
+            ResetPasswordToken.objects.get(key=token)
+            return Response()
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)

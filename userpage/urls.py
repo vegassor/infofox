@@ -15,5 +15,6 @@ urlpatterns = [
     path('bracelet/add/many/', CreateManyHandlers.as_view()),
     path('bracelet/delete/<int:pk>', deleteHandler.as_view()),
     path('bracelet/<int:pk>', AccountDefinition.as_view()),
+    path('bracelet/<int:pk>/check/', is_unique_valid),
     path('bracelet/registration/<int:pk>', JoinHandler.as_view()),
 ]

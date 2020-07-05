@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, api_view
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from .models import Profile, Bracelet, InfoBlock
@@ -31,7 +31,7 @@ class ViewProfile(APIView):
     def get(self, request):
         try:
             user_id = request.user.id
-            profiles = Profile.objects.select_related('user').filter(user__id=user_id)
+            profiles = Profile.objects.select_related('user').filter(user__id=user_id).order_by('id')
             serializer = ProfileViewListSerializer(profiles, many=True)
             return Response(serializer.data)
         except (ValueError, TypeError):
@@ -113,16 +113,19 @@ class InfoBlockFromProfileListView(APIView):
     def get(self, request, pk):
         try:
             profile = Profile.objects.get(pk=pk)
-            if profile.is_activated or (profile.user and profile.user == request.user):
-                infoblocks = InfoBlock.objects.select_related('profile').filter(profile=profile)
+
+            if profile.is_activated or profile.user == request.user:
+                infoblocks = InfoBlock.objects.select_related('profile').filter(profile=profile).order_by('id')
                 serializer = InfoBlockDetailSerializer(infoblocks, many=True)
                 response_data = {
                     'name': profile.name,
+                    'is_owner': profile.user == request.user,
                     'blocks': serializer.data
                 }
                 return Response(response_data)
             else:
                 return Response(data={'status': 'Профиль не активирован'}, status=status.HTTP_423_LOCKED)
+
         except (ValueError, TypeError):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist:
@@ -159,13 +162,13 @@ class InfoBlockFromProfileListView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+@permission_classes([IsAuthenticated])
 class BraceletFromProfile(APIView):
-    @permission_classes([IsAuthenticated])
     def get(self, request, pk):
         try:
             profile = Profile.objects.get(pk=pk)
             if request.user == profile.user and profile.is_activated:
-                bracelets = Bracelet.objects.select_related('profile').filter(profile=profile)
+                bracelets = Bracelet.objects.select_related('profile').filter(profile=profile).order_by('id')
                 serializer = BraceletsFromProfileSerializer(bracelets, many=True)
                 return Response(data=serializer.data, status=status.HTTP_200_OK)
             else:
@@ -174,8 +177,8 @@ class BraceletFromProfile(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+@permission_classes([AllowAny])
 class AccountDefinition(APIView):
-    @permission_classes([AllowAny])
     def get(self, request, pk):
         try:
             bracelet = Bracelet.objects.get(id=pk)
@@ -243,6 +246,20 @@ class JoinHandler(APIView):
             return Response({"status": "unique_code and profile_id are required"}, status=status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist:
             return Response({"status": "no such bracelet or profile"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def is_unique_valid(request, pk):
+    try:
+        bracelet = Bracelet.objects.get(id=pk)
+        if bracelet.unique_code == request.data.get('unique_code'):
+            data = {"is_valid": True}
+        else:
+            data = {"is_valid": False}
+        return Response(data=data)
+    except ObjectDoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @permission_classes([IsAuthenticated])
@@ -314,8 +331,8 @@ class CreateManyHandlers(APIView):
         return Response({'saved_bracelets_amount': success, 'bracelets': bracelets}, status=status.HTTP_201_CREATED)
 
 
+@permission_classes([IsAdminUser])
 class deleteHandler(APIView):
-    @permission_classes([IsAdminUser])
     def delete(self, request, pk):
         if not request.user.is_superuser:
             return Response(status=403)

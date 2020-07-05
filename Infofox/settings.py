@@ -131,7 +131,7 @@ AUTH_USER_MODEL = 'myauth.User'
 
 DJOSER = {
     'LOGIN_FIELD': 'username',
-    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USER_CREATE_PASSWORD_RETYPE': False,
     'PASSWORD_RESET_CONFIRM_URL': 'reset_password/confirm/{uid}/{token}',
     'USERNAME_RESET_CONFIRM_URL': 'reset_username/confirm/{uid}/{token}',
     'ACTIVATION_URL': 'activate/{uid}/{token}',

@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class Profile(models.Model):
-    name = models.CharField(max_length=60)
+    name = models.CharField(max_length=30)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     is_activated = models.BooleanField(default=False)
 

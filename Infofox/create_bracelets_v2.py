@@ -98,7 +98,7 @@ if __name__ == '__main__':
                 writer = csv.writer(f, delimiter=';')
                 for bracelet in b:
                     print(bracelet[0])
-                    url = f'http://coolstorybob.herokuapp.com/bracelet/{bracelet[0]}'
+                    url = f'http://coolstorybob.herokuapp.com/bracelet?id={bracelet[0]}'
                     writer.writerow([bracelet[0], bracelet[1], url])
         except AuthError as e:
             print(e)

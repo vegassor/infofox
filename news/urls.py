@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('', NewsListView.as_view()),
+    path('<int:pk>', NewsDetailView.as_view()),
     path('count/', NewsListCountView.as_view()),
     path('last/', NewsListLastView.as_view()),
     path('add/', NewsCreateView.as_view()),

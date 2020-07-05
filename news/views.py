@@ -10,6 +10,18 @@ from .serializers import *
 
 
 @permission_classes([AllowAny])
+class NewsDetailView(APIView):
+    """Вывод одной новости"""
+    def get(self, request, pk):
+        try:
+            news = News.objects.get(pk=pk)
+            serializer = NewsDetailSerializer(news)
+            return Response(serializer.data)
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@permission_classes([AllowAny])
 class NewsListView(APIView):
     """Вывод списка всех новостей"""
     def get(self, request):
@@ -76,13 +88,15 @@ class NewsCreateView(APIView):
 @permission_classes([IsAdminUser])
 class NewsChangeView(APIView):
     def put(self, request, pk):
-        news_ser = NewsDetailSerializer(data=request.data)
+        news_ser = NewsChangeSerializer(data=request.data)
         if news_ser.is_valid():
             try:
                 news = News.objects.get(pk=pk)
                 news.title = news_ser.validated_data['title']
                 news.content = news_ser.validated_data['content']
-                news.img = request.FILES['img']
+                img = request.FILES.get('img')
+                if img:
+                    news.img = img
                 news.save()
                 return Response(status=status.HTTP_200_OK)
             except ObjectDoesNotExist:
@@ -101,22 +115,3 @@ class NewsDeleteView(APIView):
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
-
-class UniqueOrBlankEmailValidator:
-    def __init__(self):
-        pass
-
-    def __call__(self, value):
-        try:
-            print('worked')
-            email = User.objects().get(email=value)
-            if email != '':
-                raise ValidationError
-        except ObjectDoesNotExist:
-            pass
